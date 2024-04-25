@@ -86,7 +86,7 @@ pub struct BlazeFace<'a> {
     params: BlazeFaceParams,
 }
 
-pub const BLAZE_FACE_MODEL: &[u8] = include_bytes!("blazeface-320.onnx");
+pub const BLAZE_FACE_MODEL: &[u8] = include_bytes!("../blazeface-320.onnx");
 
 impl<'a> BlazeFace<'a> {
     pub fn from_file(
