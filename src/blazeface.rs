@@ -6,7 +6,7 @@ use image::{
 };
 use itertools::Itertools;
 use ndarray::{Array3, ArrayViewD, Axis, CowArray};
-use ort::{tensor::OrtOwnedTensor, Value};
+use ort::{tensor::OrtOwnedTensor, GraphOptimizationLevel, InMemorySession, Value};
 
 use crate::{
     detection::{FaceDetector, RustFacesResult},
@@ -81,12 +81,14 @@ impl Default for BlazeFaceParams {
     }
 }
 
-pub struct BlazeFace {
-    session: ort::Session,
+pub struct BlazeFace<'a> {
+    session: InMemorySession<'a>,
     params: BlazeFaceParams,
 }
 
-impl BlazeFace {
+pub const BLAZE_FACE_MODEL: &[u8] = include_bytes!("../../assets/model/blazeface-320.onnx");
+
+impl<'a> BlazeFace<'a> {
     pub fn from_file(
         env: Arc<ort::Environment>,
         model_path: &str,
@@ -94,13 +96,16 @@ impl BlazeFace {
     ) -> Self {
         let session = ort::session::SessionBuilder::new(&env)
             .unwrap()
-            .with_model_from_file(model_path)
+            // .with_optimization_level(GraphOptimizationLevel::All).unwrap()
+            // .with_number_threads(1).unwrap()
+            .with_model_from_memory(BLAZE_FACE_MODEL)
+            // .file
             .unwrap();
         Self { session, params }
     }
 }
 
-impl FaceDetector for BlazeFace {
+impl<'a> FaceDetector for BlazeFace<'a> {
     fn detect(&self, image: ArrayViewD<u8>) -> RustFacesResult<Vec<Face>> {
         let shape = image.shape().to_vec();
         let (width, height, _) = (shape[1], shape[0], shape[2]);
